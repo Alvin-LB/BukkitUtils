@@ -1,4 +1,4 @@
-package com.bringholm.reflectutil.v1_0;
+package com.bringholm.reflectutil.v1_1;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
@@ -91,7 +91,7 @@ public class ReflectUtil {
      * @return true, only if the current version is greater than the one specified
      */
     public static boolean isVersionHigherThan(int majorVersion, int minorVersion) {
-        return majorVersion < MAJOR_VERSION || (majorVersion == MAJOR_VERSION && minorVersion < MINOR_VERSION);
+        return isVersionHigherThan(majorVersion, minorVersion, 0);
     }
 
     /**
@@ -467,6 +467,40 @@ public class ReflectUtil {
             }
         }
         return new ReflectionResponse<>(new NoSuchMethodException("No method matching " + (predicate instanceof MethodPredicate ? predicate : "specified predicate") + " in " + clazz));
+    }
+
+    /**
+     * Gets the specified declared method.
+     *
+     * @param clazz the class
+     * @param name the name of the method
+     * @param params the parameters of the method
+     * @return the method
+     */
+    public static ReflectionResponse<Method> getDeclaredMethod(Class<?> clazz, String name, Class<?>... params) {
+        return getDeclaredMethod(clazz, name, false, params);
+    }
+
+    /**
+     * Gets the specified declared method.
+     *
+     * @param clazz the class
+     * @param name the name of the method
+     * @param setAccessible whether to forcefully make the method accessible
+     * @param params the parameters of the method
+     * @return the method
+     */
+    public static ReflectionResponse<Method> getDeclaredMethod(Class<?> clazz, String name, boolean setAccessible, Class<?>... params) {
+        Validate.notNull(clazz, "clazz cannot be null");
+        Validate.notNull(name, "name cannot be null");
+        Validate.notNull(params, "params cannot be null");
+        try {
+            Method method = clazz.getDeclaredMethod(name, params);
+            method.setAccessible(setAccessible);
+            return new ReflectionResponse<>(method);
+        } catch (NoSuchMethodException e) {
+            return new ReflectionResponse<>(e);
+        }
     }
 
     /**
