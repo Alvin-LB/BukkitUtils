@@ -65,13 +65,17 @@ public class CommandsRegistrar {
                     Executor executor = (Executor) commandExecutor;
                     if (executor.getDescription() != null) {
                         command.setDescription(executor.getDescription());
-                    } else if (executor.getAliases() != null) {
+                    }
+                    if (executor.getAliases() != null) {
                         command.setAliases(executor.getAliases());
-                    } else if (executor.getPermission() != null) {
+                    }
+                    if (executor.getPermission() != null) {
                         command.setPermission(executor.getPermission());
-                    } else if (executor.getPermissionMessage() != null) {
+                    }
+                    if (executor.getPermissionMessage() != null) {
                         command.setPermissionMessage(executor.getPermissionMessage());
-                    } else if (executor.getUsage() != null) {
+                    }
+                    if (executor.getUsage() != null) {
                         command.setUsage(executor.getUsage());
                     }
                 }
