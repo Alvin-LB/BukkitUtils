@@ -1,4 +1,4 @@
-package com.bringholm.nbtutil.v1_0;
+package com.bringholm.nbtutil.v1_1;
 
 import com.bringholm.reflectutil.v1_0.ReflectUtil;
 import com.google.common.collect.Maps;
@@ -32,9 +32,11 @@ public class NBTUtil {
 
     private static final Class<?> TAG_COMPOUND_CLASS = ReflectUtil.getNMSClass("NBTTagCompound").getOrThrow();
 
+    private static final Class<?> ITEM_STACK_CLASS = ReflectUtil.getNMSClass("ItemStack").getOrThrow();
     private static final Method AS_NMS_COPY = ReflectUtil.getMethod(ReflectUtil.getCBClass("inventory.CraftItemStack").getOrThrow(), "asNMSCopy", ItemStack.class).getOrThrow();
-    private static final Field ITEM_STACK_TAG = ReflectUtil.getDeclaredFieldByType(ReflectUtil.getNMSClass("ItemStack").getOrThrow(), TAG_COMPOUND_CLASS, 0, true).getOrThrow();
+    private static final Field ITEM_STACK_TAG = ReflectUtil.getDeclaredFieldByType(ITEM_STACK_CLASS, TAG_COMPOUND_CLASS, 0, true).getOrThrow();
     private static final Method AS_BUKKIT_COPY = ReflectUtil.getMethod(ReflectUtil.getCBClass("inventory.CraftItemStack").getOrThrow(), "asBukkitCopy", ReflectUtil.getNMSClass("ItemStack").getOrThrow()).getOrThrow();
+    private static final Method ITEM_STACK_SAVE_TO_NBT = ReflectUtil.getMethodByTypeAndParams(ITEM_STACK_CLASS, TAG_COMPOUND_CLASS, 0, TAG_COMPOUND_CLASS).getOrThrow();
 
     private static final Method ENTITY_GET_HANDLE = ReflectUtil.getMethod(ReflectUtil.getCBClass("entity.CraftEntity").getOrThrow(), "getHandle").getOrThrow();
     private static final Method ENTITY_SAVE_TO_NBT = ReflectUtil.getMethodByTypeAndParams(ReflectUtil.getNMSClass("Entity").getOrThrow(), TAG_COMPOUND_CLASS, 0, TAG_COMPOUND_CLASS).getOrThrow();
@@ -42,9 +44,21 @@ public class NBTUtil {
             .withParams(TAG_COMPOUND_CLASS).withoutModifiers(Modifier.ABSTRACT).withReturnType(void.class), 0).getOrThrow();
 
     private static final Class<?> TILE_ENTITY_CLASS = ReflectUtil.getNMSClass("TileEntity").getOrThrow();
-    private static final Method GET_TILE_ENTITY = ReflectUtil.getMethodByType(ReflectUtil.getCBClass("block.CraftBlockState").getOrThrow(), TILE_ENTITY_CLASS, 0).getOrThrow();
+    private static final Method GET_TILE_ENTITY;
     private static final Method TILE_ENTITY_SAVE_TO_NBT = ReflectUtil.getMethodByTypeAndParams(TILE_ENTITY_CLASS, TAG_COMPOUND_CLASS, 0, TAG_COMPOUND_CLASS).getOrThrow();
     private static final Method TILE_ENTITY_LOAD_FROM_NBT = ReflectUtil.getMethodByTypeAndParams(TILE_ENTITY_CLASS, void.class, 0, TAG_COMPOUND_CLASS).getOrThrow();
+    private static final Class<?> CRAFT_BLOCK_ENTITY_STATE_CLASS;
+
+    static {
+        if (ReflectUtil.isVersionHigherThan(1, 12)) {
+            CRAFT_BLOCK_ENTITY_STATE_CLASS = ReflectUtil.getCBClass("block.CraftBlockEntityState").getOrThrow();
+            GET_TILE_ENTITY = ReflectUtil.getDeclaredMethodByPredicate(CRAFT_BLOCK_ENTITY_STATE_CLASS, new ReflectUtil.MethodPredicate()
+                    .withReturnType(TILE_ENTITY_CLASS).withName("getTileEntity"), 0, true).getOrThrow();
+        } else {
+            CRAFT_BLOCK_ENTITY_STATE_CLASS = null;
+            GET_TILE_ENTITY = ReflectUtil.getMethodByType(ReflectUtil.getCBClass("block.CraftBlockState").getOrThrow(), TILE_ENTITY_CLASS, 0).getOrThrow();
+        }
+    }
 
     /**
      * Loads a compressed NBTTagCompound from the specified stream.
@@ -274,6 +288,26 @@ public class NBTUtil {
     }
 
     /**
+     * Gets the complete NBT data from an ItemStack.
+     *
+     * This is different to #getItemNBT in the sense that it
+     * returns all of the data of the ItemStack, including the
+     * amount, id and data value. Note that this is in a different
+     * format and is not compatible with #setItemNBT.
+     *
+     * This method is useful when ItemStacks are to be serialized
+     * into NBT to save in a Chest for example.
+     *
+     * @param itemStack the ItemStack
+     * @return the compound
+     */
+    public static NBTTagCompound getCompleteItemNBT(ItemStack itemStack) {
+        Object handle = ReflectUtil.invokeMethod(null, AS_NMS_COPY, itemStack).getOrThrow();
+        Object tagCompound = ReflectUtil.invokeMethod(handle, ITEM_STACK_SAVE_TO_NBT, new NBTTagCompound().getHandle()).getOrThrow();
+        return NBTTagCompound.fromHandle(tagCompound);
+    }
+
+    /**
      * Gets the NBT data from an ItemStack
      *
      * @param itemStack the ItemStack
@@ -344,7 +378,12 @@ public class NBTUtil {
      * @return an NBTTagCompound containing the NBT data.
      */
     public static NBTTagCompound getTileEntityNBT(BlockState blockState) {
-        Object handle = ReflectUtil.invokeMethod(blockState, GET_TILE_ENTITY).getOrThrow();
+        Object handle = null;
+        if (!ReflectUtil.isVersionHigherThan(1, 12)) {
+            handle = ReflectUtil.invokeMethod(blockState, GET_TILE_ENTITY).getOrThrow();
+        } else if (CRAFT_BLOCK_ENTITY_STATE_CLASS.isAssignableFrom(blockState.getClass())) {
+            handle = ReflectUtil.invokeMethod(blockState, GET_TILE_ENTITY).getOrThrow();
+        }
         if (handle == null) {
             return null;
         }
@@ -363,7 +402,12 @@ public class NBTUtil {
      * @param compound the compound to set
      */
     public static void setTileEntityNBT(BlockState blockState, NBTTagCompound compound)  {
-        Object handle = ReflectUtil.invokeMethod(blockState, GET_TILE_ENTITY).getOrThrow();
+        Object handle = null;
+        if (!ReflectUtil.isVersionHigherThan(1, 12)) {
+            handle = ReflectUtil.invokeMethod(blockState, GET_TILE_ENTITY).getOrThrow();
+        } else if (CRAFT_BLOCK_ENTITY_STATE_CLASS.isAssignableFrom(blockState.getClass())) {
+            handle = ReflectUtil.invokeMethod(blockState, GET_TILE_ENTITY).getOrThrow();
+        }
         if (handle == null) {
             return;
         }
