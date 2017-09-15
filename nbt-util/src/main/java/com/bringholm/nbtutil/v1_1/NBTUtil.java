@@ -1659,6 +1659,7 @@ public class NBTUtil {
      *
      * @param <T> the type of this list
      */
+    @SuppressWarnings("UnusedReturnValue")
     public static class NBTTagList<T extends NBTTagBase> extends NBTTagBase {
         private static final Constructor<?> TAG_LIST_CONSTRUCTOR = ReflectUtil.getConstructor(ReflectUtil.getNMSClass("NBTTagList").getOrThrow()).getOrThrow();
         private static final Field LIST = ReflectUtil.getDeclaredFieldByType(ReflectUtil.getNMSClass("NBTTagList").getOrThrow(), List.class, 0, true).getOrThrow();
@@ -1966,7 +1967,7 @@ public class NBTUtil {
         }
     }
 
-    private static final List<String> METHOD_NAMES = Arrays.asList("equals", "hashCode", "toString", "getTypeId");;
+    private static final List<String> METHOD_NAMES = Arrays.asList("equals", "hashCode", "toString", "getTypeId");
 
     private static Method findValueMethod(Class<?> clazz, Class<?> type) {
         int index = 0;

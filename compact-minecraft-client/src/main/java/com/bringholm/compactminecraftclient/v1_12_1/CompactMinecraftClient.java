@@ -1,9 +1,18 @@
 package com.bringholm.compactminecraftclient.v1_12_1;
 
+import javax.crypto.Cipher;
+import javax.crypto.CipherInputStream;
+import javax.crypto.CipherOutputStream;
+import javax.crypto.NoSuchPaddingException;
+import javax.crypto.spec.IvParameterSpec;
 import java.io.*;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.net.Socket;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
+import java.security.Key;
+import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Queue;
@@ -175,7 +184,7 @@ public class CompactMinecraftClient {
                 while (running) {
                     processTasks();
                 }
-            } catch (IOException e) {
+            } catch (Exception e) {
                 System.err.println("An error occurred while initializing client!");
                 e.printStackTrace();
                 try {
@@ -195,7 +204,7 @@ public class CompactMinecraftClient {
      *
      * @throws IOException if the task caused an IOException
      */
-    protected void processTasks() throws IOException {
+    protected void processTasks() throws Exception {
         while (!taskQueue.isEmpty()) {
             taskQueue.poll().runTask();
         }
@@ -217,6 +226,19 @@ public class CompactMinecraftClient {
         }
         setState(State.LOGIN);
         sendPacket(new LoginOutPacketLoginStart(this.username));
+    }
+
+    protected void enableEncryption(Key key) throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidAlgorithmParameterException, InvalidKeyException, IOException {
+        if (!isMainThread()) {
+            taskQueue.add(() -> this.enableEncryption(key));
+            return;
+        }
+        Cipher encryptCipher = Cipher.getInstance("AES/CFB8/NoPadding");
+        encryptCipher.init(Cipher.ENCRYPT_MODE, key, new IvParameterSpec(key.getEncoded()));
+        this.outputStream = new DataOutputStream(new CipherOutputStream(socket.getOutputStream(), encryptCipher));
+        Cipher decryptCipher = Cipher.getInstance("AES/CFB8/NoPadding");
+        decryptCipher.init(Cipher.DECRYPT_MODE, key, new IvParameterSpec(key.getEncoded()));
+        this.inputStream = new DataInputStream(new CipherInputStream(socket.getInputStream(), decryptCipher));
     }
 
     /**
@@ -804,9 +826,9 @@ public class CompactMinecraftClient {
         /**
          * Runs the task.
          *
-         * @throws IOException if an IO error occurred
+         * @throws Exception if an error occurred
          */
-        void runTask() throws IOException;
+        void runTask() throws Exception;
     }
 
     /**
