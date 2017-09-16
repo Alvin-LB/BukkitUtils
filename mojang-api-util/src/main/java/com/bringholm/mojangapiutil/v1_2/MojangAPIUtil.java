@@ -1,4 +1,4 @@
-package com.bringholm.mojangapiutil.v1_1;
+package com.bringholm.mojangapiutil.v1_2;
 
 import com.google.common.base.Strings;
 import com.google.common.collect.Maps;
@@ -9,7 +9,6 @@ import org.bukkit.scheduler.BukkitRunnable;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -68,7 +67,7 @@ public class MojangAPIUtil {
      *
      * @param plugin the plugin instance
      */
-    public void setPlugin(Plugin plugin) {
+    public static void setPlugin(Plugin plugin) {
         MojangAPIUtil.plugin = plugin;
     }
 
@@ -506,7 +505,7 @@ public class MojangAPIUtil {
         }
         URL url;
         try {
-            url = new URL("https://sessionserver.mojang.com/session/minecraft/profile/" + uuid.toString().replace("-", ""));
+            url = new URL("https://sessionserver.mojang.com/session/minecraft/profile/" + uuid.toString().replace("-", "") + "?unsigned=false");
         } catch (MalformedURLException e) {
             return new Result<>(null, false, e);
         }
@@ -522,10 +521,13 @@ public class MojangAPIUtil {
                 JSONObject object = (JSONObject) PARSER.parse(result.response);
                 JSONArray propertiesArray = (JSONArray) object.get("properties");
                 String base64 = null;
+                String signedBase64 = null;
+                //noinspection Duplicates
                 for (JSONObject property : (List<JSONObject>) propertiesArray) {
                     String name = (String) property.get("name");
                     if (name.equals("textures")) {
                         base64 = (String) property.get("value");
+                        signedBase64 = (String) property.get("signature");
                     }
                 }
                 if (base64 == null) {
@@ -547,7 +549,7 @@ public class MojangAPIUtil {
                     JSONObject capeObject = (JSONObject) textures.get("CAPE");
                     capeURL = (String) capeObject.get("url");
                 }
-                return new Result<>(new SkinData(profileId, profileName, skinURL, capeURL, timeStamp, base64), true, null);
+                return new Result<>(new SkinData(profileId, profileName, skinURL, capeURL, timeStamp, base64, signedBase64), true, null);
             } else {
                 if (result.exception != null) {
                     return new Result<>(null, false, result.exception);
@@ -586,7 +588,7 @@ public class MojangAPIUtil {
         }
         URL url;
         try {
-            url = new URL("https://sessionserver.mojang.com/session/minecraft/profile/" + uuid.toString().replace("-", ""));
+            url = new URL("https://sessionserver.mojang.com/session/minecraft/profile/" + uuid.toString().replace("-", "") + "?unsigned=false");
         } catch (MalformedURLException e) {
             e.printStackTrace();
             return;
@@ -601,10 +603,13 @@ public class MojangAPIUtil {
                     JSONObject object = (JSONObject) PARSER.parse(response);
                     JSONArray propertiesArray = (JSONArray) object.get("properties");
                     String base64 = null;
+                    String signedBase64 = null;
+                    //noinspection Duplicates
                     for (JSONObject property : (List<JSONObject>) propertiesArray) {
                         String name = (String) property.get("name");
                         if (name.equals("textures")) {
                             base64 = (String) property.get("value");
+                            signedBase64 = (String) property.get("signature");
                         }
                     }
                     if (base64 == null) {
@@ -627,7 +632,7 @@ public class MojangAPIUtil {
                         JSONObject capeObject = (JSONObject) textures.get("CAPE");
                         capeURL = (String) capeObject.get("url");
                     }
-                    callBack.callBack(true, new SkinData(profileId, profileName, skinURL, capeURL, timeStamp, base64), null);
+                    callBack.callBack(true, new SkinData(profileId, profileName, skinURL, capeURL, timeStamp, base64, signedBase64), null);
                 } else {
                     if (exception != null) {
                         callBack.callBack(false, null, exception);
@@ -648,14 +653,16 @@ public class MojangAPIUtil {
         private String capeURL;
         private long timeStamp;
         private String base64;
+        private String signedBase64;
 
-        public SkinData(UUID uuid, String name, String skinURL, String capeURL, long timeStamp, String base64) {
+        public SkinData(UUID uuid, String name, String skinURL, String capeURL, long timeStamp, String base64, String signedBase64) {
             this.uuid = uuid;
             this.name = name;
             this.skinURL = skinURL;
             this.capeURL = capeURL;
             this.timeStamp = timeStamp;
             this.base64 = base64;
+            this.signedBase64 = signedBase64;
         }
 
         public UUID getUUID() {
@@ -690,9 +697,17 @@ public class MojangAPIUtil {
             return base64;
         }
 
+        public boolean hasSignedBase64() {
+            return signedBase64 != null;
+        }
+
+        public String getSignedBase64() {
+            return signedBase64;
+        }
+
         @Override
         public String toString() {
-            return "SkinData{uuid=" + uuid + ",name=" + name + ",skinURL=" + skinURL + ",capeURL=" + capeURL + ",timeStamp=" + timeStamp + "}";
+            return "SkinData{uuid=" + uuid + ",name=" + name + ",skinURL=" + skinURL + ",capeURL=" + capeURL + ",timeStamp=" + timeStamp + ",base64=" + base64 + ",signedBase64=" + signedBase64 + "}";
         }
 
         @Override
@@ -706,13 +721,14 @@ public class MojangAPIUtil {
             SkinData skinData = (SkinData) obj;
             return this.uuid.equals(skinData.uuid) && this.name.equals(skinData.name) &&
                     (this.skinURL == null ? skinData.skinURL == null : this.skinURL.equals(skinData.skinURL)) &&
-                    (this.capeURL == null ? skinData.capeURL == null : this.capeURL.equals(skinData.skinURL)) && this.timeStamp == skinData.timeStamp;
+                    (this.capeURL == null ? skinData.capeURL == null : this.capeURL.equals(skinData.skinURL)) && this.timeStamp == skinData.timeStamp &&
+                    this.base64.equals(skinData.base64) && (this.signedBase64 == null ? skinData.signedBase64 == null : this.signedBase64.equals(skinData.signedBase64));
 
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(uuid, name, skinURL, capeURL, timeStamp);
+            return Objects.hash(uuid, name, skinURL, capeURL, timeStamp, base64, signedBase64);
         }
     }
 
