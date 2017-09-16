@@ -1,6 +1,6 @@
 package com.bringholm.packetinterceptor.v1_0;
 
-import com.bringholm.reflectutil.v1_1.ReflectUtil;
+import com.bringholm.reflectutil.v1_1_1.ReflectUtil;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.mojang.authlib.GameProfile;

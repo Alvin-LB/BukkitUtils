@@ -1,6 +1,6 @@
 package com.bringholm.nbtutil.v1_1;
 
-import com.bringholm.reflectutil.v1_1.ReflectUtil;
+import com.bringholm.reflectutil.v1_1_1.ReflectUtil;
 import com.google.common.collect.Maps;
 import org.bukkit.block.BlockState;
 import org.bukkit.entity.Entity;

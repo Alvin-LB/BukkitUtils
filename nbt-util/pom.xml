@@ -12,7 +12,7 @@
         <dependency>
             <groupId>com.bringholm</groupId>
             <artifactId>ReflectUtil</artifactId>
-            <version>1.1</version>
+            <version>1.1.1</version>
         </dependency>
     </dependencies>
 </project>

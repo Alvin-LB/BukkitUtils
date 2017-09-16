@@ -1,4 +1,4 @@
-package com.bringholm.reflectutil.v1_1;
+package com.bringholm.reflectutil.v1_1_1;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
@@ -711,11 +711,8 @@ public class ReflectUtil {
                            cause the code to recurse infinitely and cause a StackOverflowError.
                            This field is normally named 'this$0' (or with added $'s if a field with that name already exists),
                            but Mojang's obfuscation tool obfuscates this field and renames it 'a'.
-
-                            Later edit: Actually, the latter about Mojang's obfuscation tool is true, but misleading. Since
-                            CraftBukkit releases are decompiled and recompiled, they get the correct names again.
-                            */
-                        if (field.getName().startsWith("this$0")) {
+                        */
+                        if (field.getName().startsWith("this$0") || (clazz.getPackage().getName().equals(NMS_PACKAGE) && field.getName().equals("a"))) {
                             continue;
                         }
                     }
