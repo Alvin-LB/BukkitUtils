@@ -1,4 +1,4 @@
-import com.bringholm.compactminecraftclient.v1_12_1.CompactMinecraftClient;
+import com.bringholm.compactminecraftclient.v1_12_2.CompactMinecraftClient;
 
 import java.io.DataInputStream;
 import java.io.File;

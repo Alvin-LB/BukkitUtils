@@ -1,4 +1,4 @@
-package com.bringholm.compactminecraftclient.v1_12_1;
+package com.bringholm.compactminecraftclient.v1_12_2;
 
 import javax.crypto.Cipher;
 import javax.crypto.CipherInputStream;
@@ -282,7 +282,7 @@ public class CompactMinecraftClient {
      * @return the protocol version
      */
     protected int getProtocolVersion() {
-        return 338;
+        return 340;
     }
 
     /**
