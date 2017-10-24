@@ -531,16 +531,16 @@ public class CompactMinecraftClient {
     public static class PlayOutPacketKeepAlive extends PacketOutbound {
         public static final int ID = 0x0B;
 
-        private int id;
+        private long id;
 
-        public PlayOutPacketKeepAlive(int id) {
+        public PlayOutPacketKeepAlive(long id) {
             super(ID);
             this.id = id;
         }
 
         @Override
         public void write(DataOutputStream outputStream) throws IOException {
-            writeVarInt(outputStream, this.id);
+            outputStream.writeLong(id);
         }
     }
 
@@ -550,10 +550,10 @@ public class CompactMinecraftClient {
     public static class PlayInPacketKeepAlive extends PacketInbound {
         public static final int ID = 0x1F;
 
-        private int id;
+        private long id;
 
         public PlayInPacketKeepAlive(DataInputStream inputStream) throws IOException {
-            this.id = readVarInt(inputStream);
+            this.id = inputStream.readLong();
         }
 
         @Override
