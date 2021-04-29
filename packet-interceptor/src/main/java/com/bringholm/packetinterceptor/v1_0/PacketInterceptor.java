@@ -39,7 +39,7 @@ public abstract class PacketInterceptor implements Listener {
     private static final Field NETWORK_MANAGER = ReflectUtil.getFieldByType(ReflectUtil.getNMSClass("PlayerConnection").getOrThrow(), NETWORK_MANAGER_CLASS, 0).getOrThrow();
     private static final Field CHANNEL = ReflectUtil.getFieldByType(NETWORK_MANAGER_CLASS, Channel.class, 0).getOrThrow();
 
-    private static final Method GET_MINECRAFT_SERVER = ReflectUtil.getMethodByType(ReflectUtil.getCBClass("CraftServer").getOrThrow(), ReflectUtil.getNMSClass("MinecraftServer").getOrThrow(), 0).getOrThrow();
+    private static final Method GET_MINECRAFT_SERVER = ReflectUtil.getMethodByType(ReflectUtil.getCBClass("CraftServer").getOrThrow(), ReflectUtil.getNMSClass("DedicatedServer").getOrThrow(), 0).getOrThrow();
     private static final Class<?> SERVER_CONNECTION_CLASS = ReflectUtil.getNMSClass("ServerConnection").getOrThrow();
     private static final Field SERVER_CONNECTION = ReflectUtil.getDeclaredFieldByType(ReflectUtil.getNMSClass("MinecraftServer").getOrThrow(), SERVER_CONNECTION_CLASS, 0, true).getOrThrow();
     private static final Class<?> PACKET_LOGIN_START = ReflectUtil.getNMSClass("PacketLoginInStart").getOrThrow();
